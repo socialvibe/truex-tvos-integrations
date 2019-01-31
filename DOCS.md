@@ -43,7 +43,7 @@ With this library, the host player app can defer to the TruexAdRenderer when it 
 
 For simplicity, publisher implemented code will be referred to as "app code" while TrueX implemented code will be referred to as "renderer code".
 
-TrueX will provide an Objective-C `TruexAdRenderer` library that can be loaded into the app. This library will offer a class, `TruexAdRenderer`, that will need to be instantiated, initialized and given certain commands (described below in [TruexAdRenderer Input Events](#truexadrenderer-input-events)) by the app code. It will also contain a singleton of shared constants, `TruexConstants`.
+TrueX will provide an Objective-C `TruexAdRenderer` library that can be loaded into the app. This library will offer a class, `TruexAdRenderer`, that will need to be instantiated, initialized and given certain commands (described below in [TruexAdRenderer Methods](#truexadrenderer-methods)) by the app code. It will also contain a singleton of shared constants, `TruexConstants`.
 
 At this point, the renderer code will take on the responsibility of requesting ads from TrueX server, creating the native UI for the TrueX choice card and interactive ad unit, as well as communicating events to the app code when action is required.
 
@@ -115,7 +115,7 @@ Alternatively, you can instantiate and `init()` the `TruexAdRenderer` in prepara
 
 ### Handling Events from TruexAdRenderer
 
-Once `start()` has been called on the renderer, it will start to emit events (a full list of events is available in [TruexAdRenderer Output Events](#truexadrenderer-output-events))
+Once `start()` has been called on the renderer, it will start to emit events (a full list of events is available in [TruexAdRendererDelegate methods](#truexadrendererdelegate-methods))
 
 One of the first events you will receive is `AD_STARTED`. This notifies the app that the renderer has received an ad for the user and has started to show the unit to the user. The app does not need to do anything in response, however it can use this event to facilitate a timeout. If an `AD_STARTED` event has not fired within a certain amount of time, the app can call `stop()` on the renderer and proceed to normal video ads. 
 
