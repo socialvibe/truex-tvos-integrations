@@ -1,39 +1,3 @@
-<!----- Conversion time: 18.989 seconds.
-
-
-Using this Markdown file:
-
-2. See the notes and action items below regarding this conversion run.
-3. Check the rendered output (headings, lists, code blocks, tables) for proper
-   formatting and use a linkchecker before you publish this page.
-
-Conversion notes:
-
-* Docs to Markdown version 1.0β14
-* Thu Jan 31 2019 10:30:31 GMT-0800 (PST)
-* Source doc: https://docs.google.com/a/truex.com/open?id=1-_MZrfFyqPqy49g38dIwmzmRtlx_66ru5PjM3LQUYXA
-* This document has images: check for >>>>>  gd2md-html alert:  inline image link in generated source and store images to your server.
-
-WARNING:
-You have 5 H1 headings. You may want to use the "H1 -> H2" option to demote all headings by one level.
-
------>
-
-
-<p style="color: red; font-weight: bold">>>>>>  gd2md-html alert:  ERRORs: 0; WARNINGs: 1; ALERTS: 5.</p>
-<ul style="color: red; font-weight: bold"><li>See top comment block for details on ERRORs and WARNINGs. <li>In the converted Markdown or HTML, search for inline alerts that start with >>>>>  gd2md-html alert:  for specific instances that need correction.</ul>
-
-<p style="color: red; font-weight: bold">Links to alert messages:</p>
-<a href="#gdcalert2">alert2</a>
-<a href="#gdcalert3">alert3</a>
-<a href="#gdcalert4">alert4</a>
-<a href="#gdcalert5">alert5</a>
-
-<p style="color: red; font-weight: bold">>>>>> PLEASE check and correct alert issues and delete this message and the inline alerts.<hr></p>
-
-
-
-
 ![TrueX logo](media/truex.png)
 
 
@@ -72,10 +36,7 @@ In a Sponsored Ad Break flow, once the user hits a mid-roll break with a TrueX t
  \
 
 
-<p id="gdcalert2" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/Untitled-document1.png). Store image on your image server and adjust path/filename if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert3">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-
-![alt_text](images/Untitled-document1.png "image_tooltip")
+![choice card](media/choice_card.png)
 
 
 **_Fig. A  true[X] mid-roll choice card_**
@@ -87,10 +48,7 @@ If the user opts to interact with TrueX, an interactive ad unit will be shown to
 
 
 
-<p id="gdcalert3" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/Untitled-document2.png). Store image on your image server and adjust path/filename if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert4">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-
-![alt_text](images/Untitled-document2.png "image_tooltip")
+![ad](media/ad.png)
 
 
 **_Fig. B  true[X] interactive ad unit_**
@@ -104,10 +62,7 @@ The Sponsored Stream flow is quite similar. In this scenario, a user will be sho
 
 
 
-<p id="gdcalert4" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/Untitled-document3.png). Store image on your image server and adjust path/filename if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert5">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-
-![alt_text](images/Untitled-document3.png "image_tooltip")
+![choice card](media/choice_card.png)
 
 
 **_Fig. C  true[X] preroll choice card (full-stream replacement)_**
@@ -119,10 +74,7 @@ For each following mid-roll ad break, the user will be shown a "hero card" (also
 
 
 
-<p id="gdcalert5" ><span style="color: red; font-weight: bold">>>>>>  gd2md-html alert: inline image link here (to images/Untitled-document4.png). Store image on your image server and adjust path/filename if necessary. </span><br>(<a href="#">Back to top</a>)(<a href="#gdcalert6">Next alert</a>)<br><span style="color: red; font-weight: bold">>>>>> </span></p>
-
-
-![alt_text](images/Untitled-document4.png "image_tooltip")
+![skip card](media/skip_card.png)
 
 
 **_Fig. D  true[X] mid-roll skip card_**
@@ -505,6 +457,3 @@ These constants will be available in **<code>TruexConstants.h</code></strong>.
 
 
         This value is used to pass into the `init()` call, for the `podType` parameter
-
-
-<!-- Docs to Markdown version 1.0β14 -->
