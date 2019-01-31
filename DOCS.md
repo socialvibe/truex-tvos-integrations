@@ -1,7 +1,7 @@
 ![TrueX logo](media/truex.png)
 
 
-#TruexAdRenderer tvOS Documentation
+# TruexAdRenderer tvOS Documentation
 
 Version 3.5.0
 
