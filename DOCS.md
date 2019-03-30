@@ -59,6 +59,7 @@ It will also need to handle skipping ads in the current ad pod, if it is notifie
 
 We've created a [sample integration](https://github.com/socialvibe/truex-tvos-google-ad-manager-reference-app) which leverages Google Ad Manager to serve true[X] ads.
 
+![reference app](media/reference_app.png)
 
 ## Product Flows
 
