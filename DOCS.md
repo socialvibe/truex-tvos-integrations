@@ -11,7 +11,7 @@ Version 3.6
 * [Reference App](#reference-app)
 * [Product Flows](#product-flows)
 * [How to use TruexAdRenderer](#how-to-use-truexadrenderer)
-    * [When to show True\[X\]](#when-to-show-truex)
+    * [When to show true\[X\]](#when-to-show-truex)
     * [Handling Events from TruexAdRenderer](#handling-events-from-truexadrenderer)
     * [Handling Ad Elimination](#handling-ad-elimination)
 * [TruexAdRenderer tvOS API](#truexadrenderer-tvos-api)
@@ -108,7 +108,7 @@ When referring to data returned via Uplynk Preplay, I will reference this exampl
 I will refer to entire object as `response`, and will point to specific pieces of data using standard JSON notation.
 
 
-### When to show True\[X\]
+### When to show true\[X\]
 
 Upon receiving an ad schedule from Uplynk, you should be able to detect whether or not true[X] is returned in any of the pods. true[X] ads should have `apiFramework` set to `VPAID`.
 
