@@ -392,19 +392,3 @@ This method is marked as **`@optional`** in the `TruexAdRendererDelegate` protoc
 This event will fire when a user backs out of the true[X] interactive ad unit after having opted in. This would be achieved by tapping the "Yes" link to the "Are you sure you want to go back and choose a different ad experience" prompt inside the true[X] interactive ad. The user will be subsequently taken back to the Choice Card (with the countdown timer reset to full).
 
 Note that after a `onUserCancel`, the user can opt-in and engage with an interactive ad again, so more `onOptIn` or `onOptOut` events may then be fired.
-
-
-#### `onOverlayCompleted`
-
-```objective-c
-    - (void)onOverlayCompleted;
-```
-
-This method is marked as **`@optional`** in the `TruexAdRendererDelegate` protocol.
-
-
-#### `onAdRequestIAP`
-- (void)onAdRequestIAP:(NSString*)productIdentifier forQuantity:(NSInteger)quantity withPresentingViewController:(UIViewController*)presentingViewController;
-- (void)onRequestShow:(NSString*)action withParameter:(NSDictionary*)parameter;
-
-#### `VIDEO_EVENT`
