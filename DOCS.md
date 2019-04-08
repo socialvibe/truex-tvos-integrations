@@ -2,7 +2,7 @@
 
 # TruexAdRenderer tvOS Documentation
 
-Version 3.6.0
+Version 3.6
 
 ## Contents
 
@@ -35,7 +35,6 @@ Version 3.6.0
         * [`onOptOut`](#onoptout)
         * [`onSkipCardShown`](#onskipcardshown)
         * [`onUserCancel`](#onusercancel)
-        * [`onVideoEvent`](#onvideoevent)
 
 ## Overview
 
@@ -196,7 +195,7 @@ This method should be called by the app code when the app is ready to display th
 
 The app should have as much extraneous UI hidden as possible, including player controls, status bars and soft buttons/keyboards.
 
-After calling `start`, the app code should wait for a [terminal event](#terminal-events) before taking any more action, while keeping track of whether or not the [`AD_FREE_POD`](#ad_free_pod) event has fired.
+After calling `start`, the app code should wait for a [terminal event](#terminal-events) before taking any more action, while keeping track of whether or not the [`AD_FREE_POD`](#onadfreepod) event has fired.
 
 In a non-error flow, the renderer will first wait for the ad request triggered in `init` to finish if it has not already. It will then display the true[X] unit to the user in a new `ViewController` presented on the `baseViewController` and then fire the [`onAdStarted`](#onadstarted) event. `onAdFreePod` and other events may fire after this point, depending on the user's choices, followed by one of the [terminal events](#terminal-events).
 
@@ -332,7 +331,7 @@ Implementing this delegate method will enable the renderer to fire this event wh
 If the app code does not implement this delegate method, then the renderer will emit an [`onAdCompleted`](#onadcompleted) event instead.
 
 
-### `TruexAdRenderer` Output Events -- Informative
+### `TruexAdRendererDelegate` Methods -- Informative
 
 All following delegate methods are marked as **`@optional`** in the `TruexAdRendererDelegate` protocol, and are used mostly for tracking purposes -- no action is generally required.
 
