@@ -1,9 +1,8 @@
-![true[X] logo](media/truex.png)
-
+![true\[X\] logo](media/truex.png)
 
 # TruexAdRenderer tvOS Documentation
 
-Version 3.6
+Version 3.6.0
 
 ## Contents
 
@@ -13,32 +12,34 @@ Version 3.6
 * [How to use TruexAdRenderer](#how-to-use-truexadrenderer)
     * [When to show true\[X\]](#when-to-show-truex)
     * [Handling Events from TruexAdRenderer](#handling-events-from-truexadrenderer)
+        * [Terminal Events](#terminal-events)
     * [Handling Ad Elimination](#handling-ad-elimination)
 * [TruexAdRenderer tvOS API](#truexadrenderer-tvos-api)
-    * [TruexAdRenderer Methods](#truexadrenderer-methods)
-        * [initWithUrl](#initwithurl)
-        * [start](#start)
-        * [stop](#stop)
-        * [pause](#pause)
-        * [resume](#resume)
-    * [TruexAdRendererDelegate methods](#truexadrendererdelegate-methods)
-        * [onAdStarted](#onadstarted)
-        * [onAdCompleted](#onadcompleted)
-        * [onAdError](#onaderror)
-        * [onNoAdsAvailable](#onnoadsavailable)
-        * [onAdFreePod](#onadfreepod)
-        * [onOptIn (optional)](#onoptin-optional)
-        * [onOptOut (optional)](#onoptout-optional)
-        * [onSkipCardShown (optional)](#onskipcardshown-optional)
-        * [onUserCancel (optional)](#onusercancel-optional)
-        * [onUserCancelStream (optional)](#onusercancelstream-optional)
-    * [TruexAdRenderer Constants](#truexadrenderer-constants)
-        * [MIDROLL](#midroll)
-        * [PREROLL](#preroll)
+    * [Adding `TruexAdRenderer` to Your Project](#adding-truexadrenderer-to-your-project)
+    * [`TruexAdRenderer` Methods](#truexadrenderer-methods)
+        * [`initWithUrl`](#initwithurl)
+        * [`start`](#start)
+        * [`stop`](#stop)
+        * [`pause`](#pause)
+        * [`resume`](#resume)
+    * [`TruexAdRendererDelegate` Methods -- Main Flow](#truexadrendererdelegate-methods----main-flow)
+        * [`onFetchAdComplete`](#onfetchadcomplete)
+        * [`onAdStarted`](#onadstarted)
+        * [`onAdCompleted`](#onadcompleted)
+        * [`onAdError`](#onaderror)
+        * [`onNoAdsAvailable`](#onnoadsavailable)
+        * [`onAdFreePod`](#onadfreepod)
+        * [`onUserCancelStream`](#onusercancelstream)
+    * [`TruexAdRendererDelegate` Methods -- Informative](#truexadrendererdelegate-methods----informative)
+        * [`onOptIn`](#onoptin)
+        * [`onOptOut`](#onoptout)
+        * [`onSkipCardShown`](#onskipcardshown)
+        * [`onUserCancel`](#onusercancel)
+        * [`onVideoEvent`](#onvideoevent)
 
 ## Overview
 
-In order to support interactive ads on tvOS, true[X] has created a renderer library that can renderer true[X] ads natively, while still leveraging the same VPAID architecture available in Uplynk and FreeWheel.
+In order to support interactive ads on tvOS, true[X] has created a renderer library that can renderer true[X] ads natively, which interfaces with a hosting app, as well as its existing ad server and content delivery mechanism (e.g. SSAI).
 
 With this library, the host player app can defer to the TruexAdRenderer when it is required to display a true[X] ad.
 
@@ -48,7 +49,7 @@ true[X] will provide an Objective-C `TruexAdRenderer` library that can be loaded
 
 At this point, the renderer code will take on the responsibility of requesting ads from true[X] server, creating the native UI for the true[X] choice card and interactive ad unit, as well as communicating events to the app code when action is required.
 
-The app code will still need to parse out the Uplynk ad response, detect when a true[X] ad is supposed to display, pause the stream, instantiate `TruexAdRenderer` and handle any events emitted by the renderer code. It will also need to call pause, resume and stop methods on the `TruexAdRenderer` when certain external events happen, like if the app is backgrounded or if the user has requested to exit the requested stream via back buttons.
+The app code will still need to parse out the SSAI ad response, detect when a true[X] ad is supposed to display, pause the stream, instantiate `TruexAdRenderer` and handle any events emitted by the renderer code. It will also need to call pause, resume and stop methods on the `TruexAdRenderer` when certain external events happen, like if the app is backgrounded or if the user has requested to exit the requested stream via back buttons.
 
 It will also need to handle skipping ads in the current ad pod, if it is notified to do so.
 
@@ -69,17 +70,21 @@ In a Sponsored Ad Break flow, once the user hits a mid-roll break with a true[X]
 
 ![choice card](media/choice_card.png)
 
-***Fig. A** example true\[X\] mid-roll choice card*
+_**Fig. A** example true[X] mid-roll choice card_
 
-If the user opts for a normal ad break, or if the user does not make a selection before the 30 second countdown timer expires, the true[X] UI will close and playback of normal video ads can continue as usual.
+If the user opts for a normal ad break, or if the user does not make a selection before the countdown timer expires, the true[X] UI will close and playback of normal video ads can continue as usual.
 
 If the user opts to interact with true[X], an interactive ad unit will be shown to the user:
 
 ![ad](media/ad.png)
 
-***Fig. B** example true\[X\] interactive ad unit*
+_**Fig. B** example true[X] interactive ad unit_
 
-The requirement for the user to "complete" this ad is for them to spend at least 30 seconds on the unit and for at least one interaction (tapping the Siri remote or navigating anywhere through the ad).
+The requirement for the user to "complete" this ad is for them to spend at least the allotted time on the unit and for at least one interaction (e.g. navigating anywhere through the ad).
+
+![true attention timer example](media/true-attention-timer-example.png)
+
+_**Fig. C** example true[X] attention timer_
 
 Once the user fulfills both requirements, a "Watch Your Show" button will appear in the bottom right, which the user can select to exit the true[X] ad. Having completed a true[X] ad, the user will be returned directly to content, skipping the remaining ads in the current ad pod.
 
@@ -87,252 +92,319 @@ The Sponsored Stream flow is quite similar. In this scenario, a user will be sho
 
 ![choice card](media/choice_card.png)
 
-***Fig. C** example true\[X\] preroll choice card (full-stream replacement)*
+_**Fig. D** example true[X] pre-roll choice card (full-stream replacement)_
 
-Similarly, once if the user opts-in and completes the true[X] ad, they will be skipped over the remainder of the pre-roll ad break. However, every subsequent mid-roll break in the current stream will also be skipped over. In this case instead of the regular pod of video ads, the user will be shown a "hero card" (also known as a "skip card"):
+Similarly, if the user opts-in and completes the true[X] ad, they will be skipped over the remainder of the pre-roll ad break. However, every subsequent mid-roll break in the current stream will also be skipped over. In this case instead of the regular pod of video ads, the user will be shown a "hero card" (also known as a "skip card"):
 
 ![skip card](media/skip_card.png)
 
-***Fig. D** example true\[X\] mid-roll skip card*
+_**Fig. E** example true[X] mid-roll skip card_
 
 This messaging will be displayed to the user for several seconds, after which they will be returned directly to content.
 
 
 ## How to use TruexAdRenderer
 
-When referring to data returned via Uplynk Preplay, I will reference this example JSON response in order to clearly explain which piece of data is required:
+### When to show true[X]
 
-```
-    https://gist.github.com/jalbini/7c0f908064ae1468beb0e4a11fd187ec
-```
+Upon receiving an ad schedule from your SSAI service, you should be able to detect whether or not true[X] is returned in any of the pods. true[X] ads should have `apiFramework` set to `VPAID` or `truex`.
 
-I will refer to entire object as `response`, and will point to specific pieces of data using standard JSON notation.
+SSAI vendors differ in the way they convey information back about ad schedules to clients. Certain vendors such as Verizon / Uplynk expose API’s which return details about the ad schedule in a JSON object. For other vendors, for instance Google DAI, the true[X] payload will be encapsulated as part of a companion payload on the returned VAST ad. Please work with your true[X] point of contact if you have difficulty identifying the right approach to detecting the true[X] placeholder, which will be the trigger point for the ad experience.
 
+Once the player reaches a true[X] placeholder, it should pause, instantiate the `TruexAdRenderer` and immediately call `init` followed by `start`.
 
-### When to show true\[X\]
-
-Upon receiving an ad schedule from Uplynk, you should be able to detect whether or not true[X] is returned in any of the pods. true[X] ads should have `apiFramework` set to `VPAID`.
-
-In the example response, you will see those values at `response.ads.breaks[0].ads[0].apiFramework` and `response.ads.breaks[0].ads[0].creative` respectively.
-
-The Uplynk PrePlay documentation will have more information on determining exactly when the VPAID ad unit should fire -- from what I've ascertained, you'd simply reference `response.ads.placeholderOffsets`, using `adIndex` and `breakIndex` to correlate them to each separate VPAID unit.
-
-Once the player reaches a placeholder, it should pause, instantiate the `TruexAdRenderer` and immediately call `init()` followed by `start()`.
-
-Alternatively, you can instantiate and `init()` the `TruexAdRenderer` in preparation for an upcoming placeholder. This will give the `TruexAdRenderer` more time to complete its initial ad request, and will help optimize true[X] load time. Once the player reaches a placeholder, it can call `start()` to notify the renderer that it can display the unit to the user.
+Alternatively, you can instantiate and `init` the `TruexAdRenderer` in preparation for an upcoming placeholder. This will give the `TruexAdRenderer` more time to complete its initial ad request, and will help streamline true[X] load time and minimize wait time for your users. Once the player reaches a placeholder, it can then call `start` to notify the renderer that it can display the unit to the user.
 
 
 ### Handling Events from TruexAdRenderer
 
-Once `start()` has been called on the renderer, it will start to emit events (a full list of events is available in [TruexAdRendererDelegate methods](#truexadrendererdelegate-methods))
+Once `start` has been called on the renderer, it will start to emit events, in the form of calling delegate methods (see [`TruexAdRendererDelegate` Methods -- Main Flow](#truexadrendererdelegate-methods----main-flow) and [`TruexAdRendererDelegate` Methods -- Informative](#truexadrendererdelegate-methods----informative))
 
-One of the first events you will receive is `AD_STARTED`. This notifies the app that the renderer has received an ad for the user and has started to show the unit to the user. The app does not need to do anything in response, however it can use this event to facilitate a timeout. If an `AD_STARTED` event has not fired within a certain amount of time, the app can call `stop()` on the renderer and proceed to normal video ads.
+One of the first events you will receive is [`onAdStarted`](#onadstarted). This notifies the app that the renderer has received an ad for the user and has started to show the unit to the user. The app does not need to do anything in response, however it can use this event to facilitate a timeout. If an `onAdStarted` event has not fired within a certain amount of time after calling `start`, the app can call `stop` on the renderer and proceed to normal video ads.
 
-If there were no ads available to the user or if there was an error making the ad request, `NO_ADS_AVAILABLE` or `AD_ERROR` will fire respectively. At this point, the app should resume playback without skipping any ads, so the user receives a normal video ad payload.
+At this point, the app must listen for the renderer's [terminal events](#terminal-events), while paying special attention to the [`onAdFreePod`](#onadfreepod) event. A *terminal event* signifies that the renderer is done with its activities and the app may now resume playback of its stream. The `onAdFreePod` event signifies that the user has earned a credit with true[X] and all linear video ads remaining in the current pod should be skipped. If the `onAdFreePod` event did not fire before a terminal event is emitted, the app should resume playback without skipping any ads, so the user receives a normal video ad payload.
 
-Another important event to listen for is `AD_FREE_POD`. This signifies that the user has earned a credit with true[X] and, once the renderer signals it is complete, all linear video ads remaining in the current pod should be skipped. It's important to note that the player should not immediately resume playback once receiving this event -- rather it should note that it was fired and continue to wait for an `AD_COMPLETED` event.
+#### Terminal Events
 
-The last major event to fire will be an `AD_COMPLETED` event. This will signal to the app that the renderer has finished showing the true[X] unit to the user. The user may have opted out of true[X], let the choice card countdown expire, or may have completed a true[X] ad unit and earned an ad-free credit (an `AD_FREE_POD` event would have already been fired in the last case). At this point, the app should check if an `AD_FREE_POD` event has fired -- if so, the user should be fast-forwarded past all remaining linear video ads and playback should resume. If not, playback still should resume, but without fast-forwarding so the user receives the remaining payload of video ads.
+The delegate methods representing *terminal events* are:
+* [`onAdCompleted`](#onadcompleted): the user has exited the true[X] ad
+* [`onUserCancelStream`](#onusercancelstream): the user intends to exit the current stream entirely
+* [`onNoAdsAvailable`](#onnoadsavailable): there were no true[X] ads available to the user
+* [`onAdError`](#onaderror): the renderer encountered an unrecoverable error
+
+It's important to note that the player should not immediately resume playback once receiving the `AD_FREE_POD` event -- rather, it should note that it was fired and continue to wait for a terminal event.
 
 
 ### Handling Ad Elimination
 
-Skipping video ads is completely the responsibility of the app code. The Uplynk Preplay API should provide enough information for the app to determine where the current pod end-point is, and, when appropriate, should fast-forward directly to this point when resuming playback.
+Skipping video ads is completely the responsibility of the app code. The SSAI API should provide enough information for the app to determine where the current pod end-point is, and the app, when appropriate, should fast-forward directly to this point when resuming playback.
 
 
 ## TruexAdRenderer tvOS API
 
-This is an outline of public `TruexAdRenderer` methods and delegate methods (referred to as events).
+This is an outline of public `TruexAdRenderer` methods and `TruexAdRendererDelegate` methods (referred to as events).
 
+
+### Adding `TruexAdRenderer` to Your Project
+
+The easiest way to add `TruexAdRenderer` is via CocoaPods. The renderer will be maintained and distributed on Github.
+
+1. Add the following Podspec repositories to your Podfile:
+    ```ruby
+    source 'https://github.com/CocoaPods/Specs.git'
+    source 'https://github.com/socialvibe/cocoapod-specs.git'
+    source 'https://innovid-cocoapods:3bbe7445d58951a8f89c5e54c0ebfdd17039589e@github.com/Innovid/cocoapods-spec.git'
+    source 'https://github.com/YOU-i-Labs/YouiTVAdRenderer-CocoaPod.git'
+    ```
+1. Add the TruexAdRenderer pod to your target:
+    ```ruby
+    target 'MyApp' do
+        use_frameworks!
+        pod 'TruexAdRenderer', '~> 3.6'
+        # [...]
+    end
+    ```
+
+**Note:** `TruexAdRenderer` and some of its dependencies are delivered as frameworks -- not as static libraries. As such, please include the `use_frameworks!` line in your target definition.
 
 ### TruexAdRenderer Methods
 
-When referring to data returned via Uplynk Preplay, I will reference this example JSON response in order to clearly explain which piece of data is required:
+#### `initWithUrl`
 
+```objective-c
+    - (_Nullable id)initWithUrl:(NSString* _Nullable)creativeUrl adParameters:(NSDictionary* _Nonnull)adParameters slotType:(NSString* _Nonnull)slotType;
 ```
-    https://gist.github.com/jalbini/79a6fcd4e12049b6f5ee1d883d372b81
-```
 
-I will refer to entire object as `response`, and will point to specific pieces of data using standard JSON notation.
+This method should be called by the app code in order to initialize the `TruexAdRenderer`. The renderer will parse out the `creativeURL`, `adParameters` and `slotType` passed to it and make a request to the true[X] ad server to see what ads are available.
 
-
-#### initWithUrl
-
-    - (id)initWithUrl:(NSString *)creativeUrl adParameters:(NSDictionary*)adParameters slotType:(NSString *)slotType optimizelyProjectId:(NSString*)optimizelyProjectId optimizelyUserId:(NSString*)optimizelyUserId
-
-This method will be called by the app code in order to instantiate the `TruexAdRenderer`. The renderer will parse out the `creativeURL` and `adParameters` passed to it and make a request to the true[X] ad server to see what ads are available.
-
-You may instantiate `TruexAdRenderer` early (a few seconds before the next pod even starts) in order to give it extra time to make the ad request.
+You may initialize `TruexAdRenderer` early (a few seconds before the next pod even starts) in order to give it extra time to make the ad request. The renderer will output an [`onFetchAdComplete`](#onfetchadcomplete) event at completion of this ad request. This event can be used to facilitate the implementation of a timeout or loading indicator, and when to make the call to `start`.
 
 The parameters for this method call are:
 
-* `creativeURL`: true[X] asset url returned by Uplynk. In the example response, this would correspond to `response.ads.breaks[0].ads[0].creative`
-* `adParameters`: AdParameters as returned by Uplynk. In the example response, this would correspond to `response.ads.breaks[0].ads[0].adParameters`
-* `podType`: the type of the current ad pod, `PREROLL` or `MIDROLL`
-* `optimizelyProjectId`: (OPTIONAL) only pass in an Optimizely Project ID if you intend to integrate the functionality of TruexAdRenderer with your existing Optimizely experimentation instance. Otherwise please pass in `nil`.
-* `optimizelyUserId`: (OPTIONAL) only pass in an Optimizely User ID if you intend to integrate the functionality of TruexAdRenderer with your existing Optimizely experimentation instance. Otherwise please pass in `nil`.
+* `creativeURL`: true[X] asset url returned by SSAI. In the example of Uplynk, this would correspond to `response.ads.breaks[0].ads[0].creative`
+* `adParameters`: AdParameters as returned by SSAI. In the example of Uplynk, this would correspond to `response.ads.breaks[0].ads[0].adParameters`
+* `slotType`: the type of the current ad pod, `PREROLL` or `MIDROLL`
 
 
-#### start
+#### `start`
 
-    - (void)start:(UIViewController *)baseViewController
+```objective-c
+    - (void)start:(UIViewController* _Null_unspecified)baseViewController;
+```
 
-This method will be called by the app code when the true[X] unit is ready to be displayed to the user. This can be called anytime after the unit is initialized.
+This method should be called by the app code when the app is ready to display the true[X] unit to the user. This can be called anytime after the unit is initialized. 
 
-The app should have as much extraneous UI hidden as possible, including player controls, status bars and soft buttons/keyboards, where possible.
+The app should have as much extraneous UI hidden as possible, including player controls, status bars and soft buttons/keyboards.
 
-Once `start()` is called, the renderer will wait for the ad request triggered in `init()` to finish.
+After calling `start`, the app code should wait for a [terminal event](#terminal-events) before taking any more action, while keeping track of whether or not the [`AD_FREE_POD`](#ad_free_pod) event has fired.
 
-If the request returns an ad, the renderer will immediately instantiate a `ViewController` and present it on the `baseViewController`. Once this is complete, it will fire the `AD_STARTED` event. The user will be shown the true[X] choice card once all relevant assets have loaded. `AD_FREE_POD` and `AD_COMPLETED` may fire after this point, depending on the user's choices.
-
-If the request returns no ads, the renderer will fire the `NO_ADS_AVAILABLE` event.
-
-If the request signals that the user is in an ad-free state, then the renderer will immediately instantiate a `ViewController` and present it on the `baseViewController`. Once this is complete, it will fire the `AD_STARTED` event. After 3 seconds of a "skip card" being shown to the user, the `AD_FREE_POD` event will fire, followed immediately by the `AD_COMPLETED` event.
-
-If the request fails, the renderer will fire the `AD_ERROR` event.
+In a non-error flow, the renderer will first wait for the ad request triggered in `init` to finish if it has not already. It will then display the true[X] unit to the user in a new `ViewController` presented on the `baseViewController` and then fire the [`onAdStarted`](#onadstarted) event. `onAdFreePod` and other events may fire after this point, depending on the user's choices, followed by one of the [terminal events](#terminal-events).
 
 The parameters for this method call are:
 
 * `baseViewController`: The `viewController` that `TruexAdRenderer` should present its `ViewController` to. The `baseViewController` should cover the entire screen.
 
 
-#### stop
+#### `stop`
 
-    - (void)stop
+```objective-c
+    - (void)stop;
+```
 
-The `stop()` method is only called when the app needs the renderer to immediately stop and destroy all related resources.
+The `stop` method is only called when the app needs the renderer to immediately stop and destroy all related resources. Examples include:
+* the user backs out of the video stream to return to the normal app UI
+* there was an unrelated error that requires immediate halt of the current ad unit
+* the app code has reached a custom timeout waiting for either the [`onFetchAdComplete`](#onfetchadcomplete) or [`onAdStarted`](#onadstarted) events
 
-For example, if a user backs out of the video stream to return to the normal app UI (perhaps by using a back button) or if there was an unrelated error that requires immediate halt of the current ad unit.
+The `TruexAdRenderer` instance should not be used again after calling `stop` -- please remove all references to it afterwards.
 
-In contrast to `pause()`, there is no way to resume the ad after `stop()` is called.
-
-
-#### pause
-
-    - (void)pause
-
-`pause()` is required whenever the renderer needs to pause the choice card or ad unit (including all video/audio and countdowns).
+In contrast to `pause`, there is no way to resume the ad after `stop` is called.
 
 
-#### resume
+#### `pause`
 
-    - (void)resume
+```objective-c
+    - (void)pause;
+```
 
-`resume()` should be invoked when ad playback can resume
-
-
-### TruexAdRendererDelegate methods
-
-This delegate protocol can be found in `TruexShared.h`
+`pause` is required whenever the app needs to pause the true[X] unit (including all video/audio and countdowns).
 
 
-#### onAdStarted
+#### `resume`
 
-    -(void) onAdStarted:(NSString *)campaignName
+```objective-c
+    - (void)resume;
+```
 
-This event will fire in response to the `start()` method when the true[X] UI is ready and has been added to the view hierarchy.
+`resume` should be called when the app is ready for a previously paused true[X] unit to resume.
 
-The app code may use this event in order to facilitate a timeout on true[X] load.
+
+### `TruexAdRendererDelegate` Methods -- Main Flow
+
+The following `TruexAdRendererDelegate` methods signal the main flow of the `TruexAdRenderer` and may require action by the host app. The `TruexAdRendererDelegate` protocol can be found in `TruexShared.h`.
+
+
+#### `onFetchAdComplete`
+
+```objective-c
+    - (void)onFetchAdComplete;
+```
+
+This method is marked as **`@optional`** in the `TruexAdRendererDelegate` protocol.
+
+This method is called in response to the `init` method when the true[X] ad request has successfully completed and the ad is ready to be presented. The host app may use this event to facilitate a loading screen for pre-rolls, or to facilitate an ad request timeout for mid-rolls.
+
+For example: `init` is called for the pre-roll slot, and the app code shows a loading indicator while waiting for `onFetchAdComplete`. Then, either the event is received (and the app can call `start`) or a specific timeout is reached (and the app can call `stop` and resume playback of normal video ads).
+
+Another example: `init` is called well before a mid-roll slot to give the renderer a chance to preload its ad. If `onFetchAdComplete` is received before the mid-roll slot is encountered, then the app can call `start` to immediately present the true[X] ad. If not, the app can wait for a specific timeout (if not already reached, in case the user has seeked to activate the mid-roll) before calling `stop` on the renderer and resuming playback with normal video ads.
+
+
+#### `onAdStarted`
+
+```objective-c
+    - (void)onAdStarted:(NSString*)campaignName;
+```
+
+This event will fire in response to the `start` method when the true[X] UI is ready and has been added to the view hierarchy.
 
 The parameters for this method call are:
 
-* `campaignName`: The name of the ad campaign available to the user (e.g. "*US Air Force - Special OPS (TA M) - Q1 2017*")
+* `campaignName`: The name of the ad campaign available to the user (e.g. "*Storebought Coffee - Sample Video Ad #1 - Q1 2017*")
 
 
-#### onAdCompleted
+#### `onAdCompleted`
 
-    -(void) onAdCompleted:(NSInteger)timeSpent
+```objective-c
+    - (void)onAdCompleted:(NSInteger)timeSpent;
+```
 
-This event will fire when the true[X] unit is complete -- at this point, the app should resume playback and remove all references to the `TruexAdRenderer` instance.
+This is a [terminal event](#terminal-events). This event will fire when the true[X] unit is finished with its activities -- at this point, the app should resume playback and remove all references to the `TruexAdRenderer` instance.
 
-Here are some examples where `AD_COMPLETED` will fire:
+Here are some examples where `onAdCompleted` will fire:
 
-* User opts for normal video ads (not )
-* 15 second choice card countdown runs out
-* User completes true[X] ad unit (or taps I'm done)
-* After a "skip card" has been shown to a user for 3 seconds
+* The user opts for normal video ads (not true[X])
+* The choice card countdown runs out
+* The user completes the true[X] ad unit
+* After a "skip card" has been shown to a user for its duration
 
 The parameters for this method call are:
 
-* `timeSpent`: The amount of time (in seconds) the user spent on the true[X] interactive ad unit -- set to `0` if the user did not earn an ad free credit or if the user was shown a "skip card".
+* `timeSpent`: The amount of time (in seconds) the user spent on the true[X] unit
 
 
-#### onAdError
+#### `onAdError`
 
-    -(void) onAdError:(NSString *)errorMessage
+```objective-c
+    - (void)onAdError:(NSString*)errorMessage;
+```
 
-This event will fire when the true[X] unit has encountered an error it cannot recover from. The app code should handle this the same way as an `AD_COMPLETED` event -- resume playback and remove all references to the `TruexAdRenderer` instance.
-
-
-#### onNoAdsAvailable
-
-    -(void) onNoAdsAvailable
-
-This event will fire when the true[X] unit has determined it has no ads available to show the current user. The app code should handle this the same way as an `AD_COMPLETED` event -- resume playback and remove all references to the `TruexAdRenderer` instance.
+This is a [terminal event](#terminal-events). This event will fire when the true[X] unit has encountered an unrecoverable error. The app code should handle this the same way as an `onAdCompleted` event -- resume playback and remove all references to the `TruexAdRenderer` instance.
 
 
-#### onAdFreePod
+#### `onNoAdsAvailable`
 
-    -(void) onAdFreePod
+```objective-c
+    - (void)onNoAdsAvailable;
+```
 
-This event will fire when the all remaining ads in the current ad pod need to be skipped. The app code should notate that this event has fired, but should not take any further action until it receives an `AD_COMPLETED` or `AD_ERROR` event.
-
-*All following events are used mostly for tracking purposes -- no action is generally required:*
+This is a [terminal event](#terminal-events). This event will fire when the true[X] unit has determined it has no ads available to show the current user. The app code should handle this the same way as an `onAdCompleted` event -- resume playback and remove all references to the `TruexAdRenderer` instance.
 
 
-#### onOptIn *(optional)*
+#### `onAdFreePod`
 
-    -(void) onOptIn:(NSString *)campaignName adId:(NSInteger)adId
+```objective-c
+    - (void)onAdFreePod;
+```
+
+This event will fire when the user has earned a credit with true[X]. The app code should notate that this event has fired, but should not take any further action. Upon receiving a [terminal event](#terminal-events), if `onAdFreePod` was fired, the app should skip all remaining ads in the current slot. If it was not fired, the app should resume playback without skipping any ads, so the user receives a normal video ad payload.
+
+
+#### `onUserCancelStream`
+
+```objective-c
+    - (void)onUserCancelStream;
+```
+
+This is a [terminal event](#terminal-events), and is marked as **`@optional`** in the `TruexAdRendererDelegate` protocol.
+
+Implementing this delegate method will enable the renderer to fire this event when the user intends to exit the stream entirely. The app, at this point, should treat this the same way it would handle any other "exit" action from within the stream -- in most cases this will result in the user being returned to an episode/series detail page.
+
+If the app code does not implement this delegate method, then the renderer will emit an [`onAdCompleted`](#onadcompleted) event instead.
+
+
+### `TruexAdRenderer` Output Events -- Informative
+
+All following delegate methods are marked as **`@optional`** in the `TruexAdRendererDelegate` protocol, and are used mostly for tracking purposes -- no action is generally required.
+
+
+#### `onOptIn`
+
+```objective-c
+    - (void)onOptIn:(NSString*)campaignName adId:(NSInteger)adId;
+```
+
+This method is marked as **`@optional`** in the `TruexAdRendererDelegate` protocol.
 
 This event will fire if the user selects to interact with the true[X] interactive ad.
 
 Note that this event may be fired multiple times if a user opts in to the true[X] interactive ad and subsequently backs out.
 
+The parameters for this event are:
 
-#### onOptOut *(optional)*
-
-    -(void) onOptOut:(BOOL)userInitiated
-
-This event will fire if the user opts for a normal video ad experience -- `userInitiated` will be set to `true` if this was actively selected by the user, `false` if the user simply allowed the choice card countdown to expire.
+* `campaignName`: The name of the ad campaign.
+* `adID`: The ad ID.
 
 
-#### onSkipCardShown *(optional)*
+#### `onOptOut`
 
-    -(void) onSkipCardShown
+```objective-c
+    - (void)onOptOut:(BOOL)userInitiated;
+```
 
-This event will fire anytime a "skip card" is shown to a user as a result of completing a true[X] Sponsored Stream interactive in an earlier pre-roll.
+This method is marked as **`@optional`** in the `TruexAdRendererDelegate` protocol.
 
+This event will fire if the user opts for a normal video ad experience.
 
-#### onUserCancel *(optional)*
+The parameters for this event are:
 
-    -(void) onUserCancel
-
-This event will fire when a user backs out of the true[X] interactive ad unit after having opted in. This would be achieved by tapping the "Nevermind" link inside the true[X] interactive ad. The user will be subsequently taken back to the Choice Card (with the countdown timer reset to full).
-
-Note that after a `USER_CANCEL`, another `OPT_IN` or `OPT_OUT` event may be fired.
-
-
-#### onUserCancelStream *(optional)*
-
-    -(void) onUserCancelStream
-
-This delegate represents that a user has decided to cancel the stream entirely. The app, at this point, should treat this the same way it would handle any other "exit" action from within the stream -- in most cases this will result in the user being returned to an episode/series detail page.
-
-This is a "terminal" delegate with similar ramifications as `AD_COMPLETED` -- meaning that once this delegate is fired, the app can safely remove all references to `TruexAdRenderer`. The only difference is that the app should exit the stream, rather than resume playback.
-
-If this optional delegate is not implemented, certain UI elements and user flows may be excluded from the true[X] flow, and any attempts for the user to exit the true[X] ad via the "MENU" button will result in `AD_COMPLETED` being fired as they were in previous versions (< 3.2.0) of TruexAdRenderer.
+* `userInitiated`: This will be set to `true` if this was actively selected by the user, `false` if the user simply allowed the choice card countdown to expire.
 
 
-### TruexAdRenderer Constants
+#### `onSkipCardShown`
 
-These constants will be available in `TruexConstants.h`.
+```objective-c
+    - (void)onSkipCardShown;
+```
+
+This method is marked as **`@optional`** in the `TruexAdRendererDelegate` protocol.
+
+This event will fire anytime a "skip card" is shown to a user as a result of completing a true[X] Sponsored Stream interactive ad in an earlier pre-roll.
 
 
-#### PREROLL
+#### `onUserCancel`
 
-This value is used to pass into the `init()` call, for the `podType` parameter
+```objective-c
+    - (void)onUserCancel;
+```
+
+This method is marked as **`@optional`** in the `TruexAdRendererDelegate` protocol.
+
+This event will fire when a user backs out of the true[X] interactive ad unit after having opted in. This would be achieved by tapping the "Yes" link to the "Are you sure you want to go back and choose a different ad experience" prompt inside the true[X] interactive ad. The user will be subsequently taken back to the Choice Card (with the countdown timer reset to full).
+
+Note that after a `onUserCancel`, the user can opt-in and engage with an interactive ad again, so more `onOptIn` or `onOptOut` events may then be fired.
 
 
-#### MIDROLL
+#### `onOverlayCompleted`
 
-This value is used to pass into the `init()` call, for the `podType` parameter
+```objective-c
+    - (void)onOverlayCompleted;
+```
+
+This method is marked as **`@optional`** in the `TruexAdRendererDelegate` protocol.
+
+
+#### `onAdRequestIAP`
+- (void)onAdRequestIAP:(NSString*)productIdentifier forQuantity:(NSInteger)quantity withPresentingViewController:(UIViewController*)presentingViewController;
+- (void)onRequestShow:(NSString*)action withParameter:(NSDictionary*)parameter;
+
+#### `VIDEO_EVENT`
