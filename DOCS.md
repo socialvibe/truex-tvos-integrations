@@ -110,7 +110,7 @@ Upon receiving an ad schedule from your SSAI service, you should be able to dete
 
 SSAI vendors differ in the way they convey information back about ad schedules to clients. Certain vendors such as Verizon / Uplynk expose API’s which return details about the ad schedule in a JSON object. For other vendors, for instance Google DAI, the true[X] payload will be encapsulated as part of a companion payload on the returned VAST ad. Please work with your true[X] point of contact if you have difficulty identifying the right approach to detecting the true[X] placeholder, which will be the trigger point for the ad experience.
 
-Once the player reaches a true[X] placeholder, it should pause, instantiate the `TruexAdRenderer` and immediately call `init` followed by `start`.
+Once the player reaches a true[X] placeholder, it should pause, instantiate the `TruexAdRenderer` and immediately call [`init`](#initwithurl) followed by [`start`](#start).
 
 Alternatively, you can instantiate and `init` the `TruexAdRenderer` in preparation for an upcoming placeholder. This will give the `TruexAdRenderer` more time to complete its initial ad request, and will help streamline true[X] load time and minimize wait time for your users. Once the player reaches a placeholder, it can then call `start` to notify the renderer that it can display the unit to the user.
 
@@ -131,7 +131,7 @@ The delegate methods representing *terminal events* are:
 * [`onNoAdsAvailable`](#onnoadsavailable): there were no true[X] ads available to the user
 * [`onAdError`](#onaderror): the renderer encountered an unrecoverable error
 
-It's important to note that the player should not immediately resume playback once receiving the `AD_FREE_POD` event -- rather, it should note that it was fired and continue to wait for a terminal event.
+It's important to note that the player should not immediately resume playback once receiving the `onAdFreePod` event -- rather, it should note that it was fired and continue to wait for a terminal event.
 
 
 ### Handling Ad Elimination
@@ -152,9 +152,10 @@ The easiest way to add `TruexAdRenderer` is via CocoaPods. The renderer will be 
     ```ruby
     source 'https://github.com/CocoaPods/Specs.git'
     source 'https://github.com/socialvibe/cocoapod-specs.git'
-    source 'https://innovid-cocoapods:3bbe7445d58951a8f89c5e54c0ebfdd17039589e@github.com/Innovid/cocoapods-spec.git'
+    source 'https://github.com/Innovid/cocoapods-spec.git'
     source 'https://github.com/YOU-i-Labs/YouiTVAdRenderer-CocoaPod.git'
     ```
+    **Note:** Two of `TruexAdRenderer`'s dependencies, from `Innovid` and `YOU-i-Labs`, are not available in the public specs repo.
 1. Add the TruexAdRenderer pod to your target:
     ```ruby
     target 'MyApp' do
@@ -195,7 +196,7 @@ This method should be called by the app code when the app is ready to display th
 
 The app should have as much extraneous UI hidden as possible, including player controls, status bars and soft buttons/keyboards.
 
-After calling `start`, the app code should wait for a [terminal event](#terminal-events) before taking any more action, while keeping track of whether or not the [`AD_FREE_POD`](#onadfreepod) event has fired.
+After calling `start`, the app code should wait for a [terminal event](#terminal-events) before taking any more action, while keeping track of whether or not the [`onAdFreePod`](#onadfreepod) event has fired.
 
 In a non-error flow, the renderer will first wait for the ad request triggered in `init` to finish if it has not already. It will then display the true[X] unit to the user in a new `ViewController` presented on the `baseViewController` and then fire the [`onAdStarted`](#onadstarted) event. `onAdFreePod` and other events may fire after this point, depending on the user's choices, followed by one of the [terminal events](#terminal-events).
 
@@ -226,7 +227,7 @@ In contrast to `pause`, there is no way to resume the ad after `stop` is called.
     - (void)pause;
 ```
 
-`pause` is required whenever the app needs to pause the true[X] unit (including all video/audio and countdowns).
+`pause` is required whenever the app needs to pause the true[X] unit (including all video, audio, and timers).
 
 
 #### `resume`
