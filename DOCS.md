@@ -2,7 +2,7 @@
 
 # TruexAdRenderer tvOS Documentation
 
-Version 3.6
+Version 3.7
 
 ## Contents
 
